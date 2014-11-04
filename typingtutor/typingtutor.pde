@@ -1,4 +1,4 @@
-int typingSpeed = 30;
+int typingSpeed = 15;
 
 PImage hands;
 
@@ -13,6 +13,8 @@ int lineNo = 0;
 boolean newLine = false;
 boolean ready = false;
 
+int sliderY;
+
 String line2 = "";
 String line3 = "";
 
@@ -21,7 +23,7 @@ PFont cousine72;
 
 String article[];
 
-void setup() {
+void setup() {  
   // load chords json
   chords = loadJSONObject("data.json");
   
@@ -46,6 +48,9 @@ void setup() {
   
   // load article
   article = loadStrings("article.txt");
+  
+  // sliderY
+  sliderY = height - 138;
 }
 
 void draw() {
@@ -71,12 +76,37 @@ void draw() {
   // background
   background(255);
   
+  // typing speed slider
+  if (mousePressed && mouseX >= width-75 && mouseX <= width-50 && mouseY >= height-200 && mouseY <= height-50) {
+    sliderY = mouseY;
+  }
+  
+  typingSpeed = int(map(sliderY, height-200, height-50, 5, 60));
+  
+  
+  rectMode(CORNER);
+  noStroke();
+  fill(200);
+  rect(width-75, height-200, 25, 175); 
+  fill(0);
+  rect(width-75, sliderY, 25, 25);
+  
   // hands image
   image(hands, (width-hands.width)/2, 0);
   
   // chord specification
   int chord = chords.getInt(curCharString);
   String chord_bin = binary(chord, 10);
+  
+  // fingertip letters
+  String tipLetters[] = {"a", "e", "i", "n", "SH", "SP", "o", "r", "s", "t"};
+  fill(255);
+  noStroke();
+  textFont(cousine, 24);
+  textAlign(CENTER, CENTER);
+  for (int i = 0; i < 10; i++) {
+    text(tipLetters[i], fingertips[i].x, fingertips[i].y);
+  }
   
   // fingertip dots
   for (int i = 0; i < 10; i++) {
