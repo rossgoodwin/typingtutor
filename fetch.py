@@ -3,6 +3,7 @@ import math
 from goose import Goose
 
 script, url = argv
+
 g = Goose()
 article = g.extract(url=url)
 text = article.cleaned_text
@@ -29,5 +30,5 @@ formattedA = [' '.join(l) for l in lines]
 formattedB = '\n'.join(formattedA)
 
 f = open('typingtutor/data/article.txt', 'w')
-f.write(formattedB.encode('utf8'))
+f.write(formattedB.encode('ascii', 'ignore'))
 f.close()

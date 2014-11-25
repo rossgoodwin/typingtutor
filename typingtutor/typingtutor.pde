@@ -1,4 +1,4 @@
-int typingSpeed = 15;
+// int typingSpeed = 15;
 
 PImage hands;
 
@@ -11,7 +11,7 @@ PVector originalRectLocation;
 
 int lineNo = 0;
 boolean newLine = false;
-boolean ready = false;
+//boolean ready = false;
 
 int sliderY;
 
@@ -22,6 +22,14 @@ PFont cousine;
 PFont cousine72;
 
 String article[];
+
+int chord;
+
+char curChar;
+boolean next = false;
+boolean showChord = false;
+
+int dingDing;
 
 void setup() {  
   // load chords json
@@ -49,8 +57,9 @@ void setup() {
   // load article
   article = loadStrings("article.txt");
   
-  // sliderY
-  sliderY = height - 138;
+  // easy and hard buttons
+  // Button easyButt = new Button(width/2, height-45, "EASY\nMODE");
+  
 }
 
 void draw() {
@@ -59,67 +68,114 @@ void draw() {
   
   // specify current line and current character
   String curLine = article[lineNo];
-  if (article.length > lineNo) {
+  if (article.length > lineNo+1) {
     line2 = article[lineNo+1];
   } else {
     line2 = "";
   }
-  if (article.length > lineNo+1) {
+  if (article.length > lineNo+2) {
     line3 = article[lineNo+2];
   } else {
     line3 = "";
   }
   
-  char curChar = curLine.charAt(int((rectLocation.x-50)/charLength));
+  int charIndex = floor((rectLocation.x-50)/charLength);
+  try {
+    curChar = curLine.charAt(charIndex);
+  }
+  catch (Exception err) {
+    err.printStackTrace();
+    curChar = '\n';
+  }
   String curCharString = str(curChar);
   
   // background
   background(255);
   
-  // typing speed slider
-  if (mousePressed && mouseX >= width-75 && mouseX <= width-50 && mouseY >= height-200 && mouseY <= height-50) {
-    sliderY = mouseY;
-  }
-  
-  typingSpeed = int(map(sliderY, height-200, height-50, 5, 60));
-  
-  
-  rectMode(CORNER);
-  noStroke();
-  fill(200);
-  rect(width-75, height-200, 25, 175); 
-  fill(0);
-  rect(width-75, sliderY, 25, 25);
-  
-  // hands image
-  image(hands, (width-hands.width)/2, 0);
-  
   // chord specification
-  int chord = chords.getInt(curCharString);
+  try {
+    chord = chords.getInt(curCharString);
+  }
+  catch (Exception err) {
+    err.printStackTrace();
+    chord = 16;
+  }
   String chord_bin = binary(chord, 10);
   
-  // fingertip letters
-  String tipLetters[] = {"a", "e", "i", "n", "SH", "SP", "o", "r", "s", "t"};
-  fill(255);
-  noStroke();
-  textFont(cousine, 24);
-  textAlign(CENTER, CENTER);
-  for (int i = 0; i < 10; i++) {
-    text(tipLetters[i], fingertips[i].x, fingertips[i].y);
+  if (showChord) {
+    dingDing = frameCount + int(frameRate*3);
   }
   
-  // fingertip dots
-  for (int i = 0; i < 10; i++) {
-    if (chord_bin.charAt(i) == '1') {
-      ellipseMode(CENTER);
-      noStroke();
-      fill(255,0,0,100);
-      ellipse(fingertips[i].x, fingertips[i].y, 50, 50);
+  if (showChord || frameCount <= dingDing) {
+    
+    // masking rectangle
+    fill(255);
+    rectMode(CORNER);
+    noStroke();
+    rect(0, 0, width, hands.height);
+  
+    // hands image
+    image(hands, (width-hands.width)/2, 0);
+    
+    // fingertip letters
+    String tipLetters[] = {"a", "e", "i", "n", "SH", "SP", "o", "r", "s", "t"};
+    fill(255);
+    noStroke();
+    textFont(cousine, 24);
+    textAlign(CENTER, CENTER);
+    for (int i = 0; i < 10; i++) {
+      text(tipLetters[i], fingertips[i].x, fingertips[i].y);
     }
+    
+    // fingertip dots
+    for (int i = 0; i < 10; i++) {
+      if (chord_bin.charAt(i) == '1') {
+        ellipseMode(CENTER);
+        noStroke();
+        fill(255,0,0,100);
+        ellipse(fingertips[i].x, fingertips[i].y, 50, 50);
+      }
+    }
+    
+    // display current letter
+    noStroke();
+    fill(0);
+    textFont(cousine72, 72);
+    textAlign(CENTER, TOP);
+    text(curChar, width/2, 100);
+    
+    showChord = false;
+    
+  } else {
+    
+    // current line of text
+    String lineThusFar = curLine.substring(0, charIndex);
+    
+    fill(0);
+    textFont(cousine, 24);
+    textAlign(LEFT, TOP);
+    text(lineThusFar, 50, 500);
+    
+    // previous lines
+    int j = lineNo-1;
+    for (int i=0; i<lineNo; i++) {
+      text(article[j], 50, 500-30*(i+1));
+      j--;
+    }
+    
+    // draw cursor
+    if (floor(frameCount/2) % 20 >= 0 && floor(frameCount/2) % 20 < 15) {     
+      noStroke();
+      fill(191);
+      rectMode(CORNER);
+      rect(rectLocation.x, 500, charLength, 20);
+    }
+    
   }
   
   // border below hands image
   noStroke();
+  rectMode(CORNER);
   fill(0);
   rect(0, hands.height, width, 10);
   
@@ -137,33 +193,26 @@ void draw() {
   rectMode(CORNER);
   rect(rectLocation.x, rectLocation.y, charLength, 20);
   
-  // display current letter
-  noStroke();
-  fill(0);
-  textFont(cousine72, 72);
-  textAlign(CENTER, TOP);
-  text(curChar, width/2, 100);
-  
-  // new line conditions
-  if (frameCount % typingSpeed == 0 && rectLocation.x > 50+curLine.length()*(charLength-1)) newLine = true;
+  // increment rectangle
+  if (next && !newLine) {
+    PVector increment = new PVector(charLength, 0);
+    rectLocation.add(increment);
+    next = false;
+  }
   
   // carriage return
   if (newLine) {
-    rectLocation.x = 50-charLength;
+    rectLocation.x = 50;
     rectLocation.y = height-200;
     newLine = false;
     lineNo++;
-    if (lineNo > article.length) exit();
-  }
-  
-  // increment rectangle
-  if (ready && frameCount % typingSpeed == 0) {
-    PVector increment = new PVector(charLength, 0);
-    rectLocation.add(increment);
+    if (lineNo >= article.length) exit();
   }
   
 }
 
 void keyPressed() {
-  ready = true;
+  if (key == char(curChar) & key != '\n') next = true;
+  if (key == '\n') newLine = true;
+  if (key == '`') showChord = true;
 }
