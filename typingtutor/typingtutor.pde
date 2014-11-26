@@ -28,8 +28,10 @@ int chord;
 char curChar;
 boolean next = false;
 boolean showChord = false;
+boolean easyMode = false;
 
 int dingDing;
+int score = 0;
 
 void setup() {  
   // load chords json
@@ -58,11 +60,12 @@ void setup() {
   article = loadStrings("article.txt");
   
   // easy and hard buttons
-  // Button easyButt = new Button(width/2, height-45, "EASY\nMODE");
+  //Button easyButt = new Button(width/2, height-45, "N00B\nMODE");
   
 }
 
 void draw() {
+  
   // Specify charLength
   int charLength = 14;
   
@@ -103,10 +106,11 @@ void draw() {
   String chord_bin = binary(chord, 10);
   
   if (showChord) {
+    score -= 1;
     dingDing = frameCount + int(frameRate*3);
   }
   
-  if (showChord || frameCount <= dingDing) {
+  if (showChord || frameCount <= dingDing || easyMode) {
     
     // masking rectangle
     fill(255);
@@ -193,8 +197,19 @@ void draw() {
   rectMode(CORNER);
   rect(rectLocation.x, rectLocation.y, charLength, 20);
   
+  // score
+  fill(0);
+  textFont(cousine, 24);
+  textAlign(RIGHT, BOTTOM);
+  if (easyMode) {
+    text("EASY MODE", width-50, height-50);
+  } else {
+    text("SCORE: " + str(score), width-50, height-50);
+  }
+  
   // increment rectangle
   if (next && !newLine) {
+    score += 2;
     PVector increment = new PVector(charLength, 0);
     rectLocation.add(increment);
     next = false;
@@ -202,6 +217,7 @@ void draw() {
   
   // carriage return
   if (newLine) {
+    score += 10;
     rectLocation.x = 50;
     rectLocation.y = height-200;
     newLine = false;
@@ -212,7 +228,16 @@ void draw() {
 }
 
 void keyPressed() {
-  if (key == char(curChar) & key != '\n') next = true;
-  if (key == '\n') newLine = true;
-  if (key == '`') showChord = true;
+  if (key == char(curChar) && key != '\n') {
+    next = true;
+  } else if (key == char(curChar) && key == '\n') {
+    newLine = true;
+  } else if (key == '`') {
+    showChord = true;
+  } else if (keyCode == CONTROL) {
+    easyMode = !easyMode;
+    score = 0;
+  } else if (key != CODED && key != char(curChar)) {
+    score -= 2;
+  }
 }
